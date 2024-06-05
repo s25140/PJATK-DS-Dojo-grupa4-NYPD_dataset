@@ -1,1 +1,1 @@
-print(dsdasda)
+print('test')
