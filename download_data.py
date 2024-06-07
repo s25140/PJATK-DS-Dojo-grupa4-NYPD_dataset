@@ -1,71 +1,63 @@
-# import requests
-# import pandas as pd
-# from tqdm import tqdm
-#
-# import requests
-#
-# socrata_url = "https://data.cityofnewyork.us/resource/qgea-i56i.json"
-#
-# data_len = 8914838
-#
-# limit = data_len//100
-# offset = 0
-# all_data = []
-#
-# data_len = 8914838
-#
-#
-#
-# params = {
-#     "$limit": data_len,
-#     "$offset": offset,
-# }
-# response = requests.get(socrata_url, params=params)
-#
-#
-# data = response.json()
-#
-# df = pd.DataFrame(data)
-
 import requests
 import pandas as pd
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
+import threading
+import time
+import logging
+
 
 socrata_url = "https://data.cityofnewyork.us/resource/qgea-i56i.json"
 data_len = 8914838
 batch_size = 100000
+lock = threading.Lock()
+
+logging.basicConfig(filename='errors.log', level=logging.ERROR)
 
 
-def fetch_data(offset, limit):
+def fetch_data_and_save(offset, limit, max_retries=3):
     params = {
         "$limit": limit,
         "$offset": offset,
     }
-    response = requests.get(socrata_url, params=params)
-    response.raise_for_status()
-    return response.json()
+
+    for attempt in range(max_retries):
+        try:
+            response = requests.get(socrata_url, params=params)
+            response.raise_for_status()
+            data = response.json()
+
+            # Convert to DataFrame and save to CSV
+            df = pd.DataFrame(data)
+
+            # Use lock to safely write to the file
+            with lock:
+                df.to_csv('nyc_data.csv', mode='a', header=False, index=False)
+
+            # If successful, break out of the retry loop
+            break
+        except Exception as e:
+            logging.error(f"An error occurred on attempt {attempt + 1} for offset {offset}: {e}")
+            time.sleep(2 ** attempt)
 
 
 def main():
     offsets = range(0, data_len, batch_size)
-    all_data = []
+
+    # Create a CSV file and write the header (if needed)
+    response = requests.get(socrata_url, params={'$limit': 1, '$offset': 0})
+    data = response.json()  # Fetch just one record to get the header
+    pd.DataFrame(data).to_csv('nyc_data.csv', mode='w', index=False)
+
 
     with ThreadPoolExecutor(max_workers=10) as executor:
-        futures = [executor.submit(fetch_data, offset, batch_size) for offset in offsets]
+        futures = [executor.submit(fetch_data_and_save, offset, batch_size, 3) for offset in offsets]
         for future in tqdm(as_completed(futures), total=len(futures)):
             try:
-                data = future.result()
-                all_data.extend(data)
+                future.result()
             except Exception as e:
                 print(f"An error occurred: {e}")
-
-    df = pd.DataFrame(all_data)
-    df.to_csv('nyc_data.csv', index=False)
-    print("Data has been saved to nyc_data.csv")
 
 
 if __name__ == "__main__":
     main()
-
-
