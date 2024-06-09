@@ -32,41 +32,50 @@ def preprocess_data(df):
     df.drop([':@computed_region_efsh_h5xi',
              ':@computed_region_f5dn_yrer', ':@computed_region_yeji_bk3q', ':@computed_region_92fq_4b7q',
              ':@computed_region_sbqj_enih', 'lat_lon'], inplace=True, axis=1)
-    
-    # Drop columns that are not used
-    df.drop(set(df.columns) - set(used_col_names), axis=1, inplace=True)
-    # Drop rows with missing values in used columns
-    df.dropna(subset=used_col_names + [label_col_name], inplace=True)
 
-    # Change None valuaes to actual None, to reduce the memory(before DataSet was 3.7Gb, now 2.5Gb)
+    # We selected all columns that needed to our classification task, and rename to more clear names
+    df = df[['cmplnt_fr_tm', 'vic_age_group', 'vic_race', 'vic_sex', 'susp_race', 'susp_sex', 'addr_pct_cd', 'boro_nm',
+            'loc_of_occur_desc', 'prem_typ_desc', 'ofns_desc']].copy()
+    df.columns = ['time_of_call', 'vic_age_group', 'vic_race', 'vic_sex', 'suspect_race', 'suspect_sex', 'precinct',
+                  'borough', 'location_of_occurrence', 'premises', 'offence_description']
+
+    # Replace all string representation of None to actual None, to reduce memory usage
     df.replace('(null)', None, inplace=True)
-    df.replace('NONE',None, inplace=True)
+    df.replace('NONE', None, inplace=True)
     df.replace('UNKNOWN', None, inplace=True)
-    # synonims, see find_similar_labels.ipynb for more
-    df[label_col_name] = df[label_col_name].replace('KIDNAPPING AND RELATED OFFENSES', 'KIDNAPPING & RELATED OFFENSES')
-    df[label_col_name] = df[label_col_name].replace('OTHER STATE LAWS (NON PENAL LA', 'OTHER STATE LAWS (NON PENAL LAW)')
-    df[label_col_name] = df[label_col_name].replace('LOITERING/DEVIATE SEX', 'SEX CRIMES')
-    df[label_col_name] = df[label_col_name].replace('FELONY SEX CRIMES', 'SEX CRIMES')
-    df[label_col_name] = df[label_col_name].replace('ADMINISTRATIVE CODE', 'ADMINISTRATIVE CODES')
-    df[label_col_name] = df[label_col_name].replace('INTOXICATED & IMPAIRED DRIVING','INTOXICATED/IMPAIRED DRIVING')
-    df[label_col_name] = df[label_col_name].replace('NYS LAWS-UNCLASSIFIED VIOLATION', 'NYS LAWS-UNCLASSIFIED FELONY')
-    df[label_col_name] = df[label_col_name].replace('ANTICIPATORY OFFENSES','OFFENSES AGAINST THE PERSON')
-    df[label_col_name] = df[label_col_name].replace('CARDS','LOITERING/GAMBLING')
-    df[label_col_name] = df[label_col_name].replace('LOITERING/GAMBLING', 'GAMBLING')
-    df[label_col_name] = df[label_col_name].replace('FRAUDULENT ACCOSTING','FRAUDS')
-    df[label_col_name] = df[label_col_name].replace('OFFENSES INVOLVING FRAUD', 'FRAUDS')
-    df['prem_typ_desc'] = df['prem_typ_desc'].replace('BEAUTY & NAIL SALON','BEAUTY/NAIL SALON')
-    df['prem_typ_desc'] = df['prem_typ_desc'].replace('CHECK CASHING BUSINESS','CHECK CASH')
-    df['prem_typ_desc'] = df['prem_typ_desc'].replace('CLOTHING/BOUTIQUE', 'CLOTHING BOUTIQUE')
-    df['prem_typ_desc'] = df['prem_typ_desc'].replace('COMMERCIAL BLDG', 'COMMERCIAL BUILDING')
-    df['prem_typ_desc'] = df['prem_typ_desc'].replace('DEPARTMENT STORE', 'DEPT STORE')
-    df['prem_typ_desc'] = df['prem_typ_desc'].replace('DOCTOR/DENTIST OFFICE','DOCTOR/DENTIST')
-    df['prem_typ_desc'] = df['prem_typ_desc'].replace('FOOD SUPERMARKET','SUPERMARKET')
-    df['prem_typ_desc'] = df['prem_typ_desc'].replace('JEWELRY STORE','JEWELRY')
-    df['prem_typ_desc'] = df['prem_typ_desc'].replace('SHOE STORE','SHOE')
-    df['prem_typ_desc'] = df['prem_typ_desc'].replace('SOCIAL CLUB/POLICY LOCATI','SOCIAL CLUB/POLICY')
 
     return df
+    # # # Drop columns that are not used
+    # # df.drop(set(df.columns) - set(used_col_names), axis=1, inplace=True)
+    # # # Drop rows with missing values in used columns
+    # # df.dropna(subset=used_col_names + [label_col_name], inplace=True)
+    #
+    # # Change None valuaes to actual None, to reduce the memory(before DataSet was 3.7Gb, now 2.5Gb)
+    # # synonims, see find_similar_labels.ipynb for more
+    # df[label_col_name] = df[label_col_name].replace('KIDNAPPING AND RELATED OFFENSES', 'KIDNAPPING & RELATED OFFENSES')
+    # df[label_col_name] = df[label_col_name].replace('OTHER STATE LAWS (NON PENAL LA', 'OTHER STATE LAWS (NON PENAL LAW)')
+    # df[label_col_name] = df[label_col_name].replace('LOITERING/DEVIATE SEX', 'SEX CRIMES')
+    # df[label_col_name] = df[label_col_name].replace('FELONY SEX CRIMES', 'SEX CRIMES')
+    # df[label_col_name] = df[label_col_name].replace('ADMINISTRATIVE CODE', 'ADMINISTRATIVE CODES')
+    # df[label_col_name] = df[label_col_name].replace('INTOXICATED & IMPAIRED DRIVING','INTOXICATED/IMPAIRED DRIVING')
+    # df[label_col_name] = df[label_col_name].replace('NYS LAWS-UNCLASSIFIED VIOLATION', 'NYS LAWS-UNCLASSIFIED FELONY')
+    # df[label_col_name] = df[label_col_name].replace('ANTICIPATORY OFFENSES','OFFENSES AGAINST THE PERSON')
+    # df[label_col_name] = df[label_col_name].replace('CARDS','LOITERING/GAMBLING')
+    # df[label_col_name] = df[label_col_name].replace('LOITERING/GAMBLING', 'GAMBLING')
+    # df[label_col_name] = df[label_col_name].replace('FRAUDULENT ACCOSTING','FRAUDS')
+    # df[label_col_name] = df[label_col_name].replace('OFFENSES INVOLVING FRAUD', 'FRAUDS')
+    # df['prem_typ_desc'] = df['prem_typ_desc'].replace('BEAUTY & NAIL SALON','BEAUTY/NAIL SALON')
+    # df['prem_typ_desc'] = df['prem_typ_desc'].replace('CHECK CASHING BUSINESS','CHECK CASH')
+    # df['prem_typ_desc'] = df['prem_typ_desc'].replace('CLOTHING/BOUTIQUE', 'CLOTHING BOUTIQUE')
+    # df['prem_typ_desc'] = df['prem_typ_desc'].replace('COMMERCIAL BLDG', 'COMMERCIAL BUILDING')
+    # df['prem_typ_desc'] = df['prem_typ_desc'].replace('DEPARTMENT STORE', 'DEPT STORE')
+    # df['prem_typ_desc'] = df['prem_typ_desc'].replace('DOCTOR/DENTIST OFFICE','DOCTOR/DENTIST')
+    # df['prem_typ_desc'] = df['prem_typ_desc'].replace('FOOD SUPERMARKET','SUPERMARKET')
+    # df['prem_typ_desc'] = df['prem_typ_desc'].replace('JEWELRY STORE','JEWELRY')
+    # df['prem_typ_desc'] = df['prem_typ_desc'].replace('SHOE STORE','SHOE')
+    # df['prem_typ_desc'] = df['prem_typ_desc'].replace('SOCIAL CLUB/POLICY LOCATI', 'SOCIAL CLUB/POLICY')
+
+    # return df
 
 
 def fetch_data_and_save(offset, limit, max_retries=3):
