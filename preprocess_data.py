@@ -200,11 +200,13 @@ def save_train_test_split_data():
     joblib.dump(y_test, 'data/y_test.pkl')
 
 
-# Save filtered data, with no encoding applied
-save_filtered_data(data, 'selected_data')
-# Save filtered data, with encoding applied
-save_filtered_data(sample, 'encoded_selected_data')
-# Save encoders
-save_encoders()
-# Save train_test data
-save_train_test_split_data()
+
+def preprocess_data():
+    # Save filtered data, with no encoding applied
+    save_filtered_data(data, 'selected_data')
+    # Save filtered data, with encoding applied
+    save_filtered_data(sample, 'encoded_selected_data')
+    # Save encoders
+    save_encoders()
+    # Save train_test data
+    save_train_test_split_data()

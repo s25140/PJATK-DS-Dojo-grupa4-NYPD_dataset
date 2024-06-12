@@ -73,7 +73,7 @@ def fetch_data_and_save(offset, limit, max_retries=3):
             time.sleep(2 ** attempt)
 
 
-def main():
+def download_data():
     offsets = range(1, data_len, batch_size)
 
     response = requests.get(socrata_url, params={'$limit': 1, '$offset': 0})
@@ -91,5 +91,3 @@ def main():
                 print(f"An error occurred: {e}")
 
 
-if __name__ == "__main__":
-    main()
