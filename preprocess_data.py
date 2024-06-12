@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
@@ -6,6 +7,12 @@ from sklearn.preprocessing import MinMaxScaler
 import joblib
 
 data = pd.read_csv('data/nyc_data.csv')
+
+
+vic_age_group_valid_values = ['45-64', '18-24', '25-44', '<18', '65+', np.nan]
+data = data[data['vic_age_group'].isin(vic_age_group_valid_values)]
+
+
 
 # Merge labels
 data['offence_description'] = data['offence_description'].replace('PETIT LARCENY OF MOTOR VEHICLE',
@@ -115,38 +122,38 @@ def convert_time_to_minutes(row):
 sample.loc[:, 'time_of_call'] = sample.time_of_call.apply(convert_time_to_minutes)
 
 time_normalizer = MinMaxScaler().fit(sample[['time_of_call']])
-sample.loc[:, 'time_of_call'] = time_normalizer.transform(sample[['time_of_call']]).astype('float')
+sample.loc[:, 'time_of_call'] = time_normalizer.transform(sample[['time_of_call']])
 
 vic_age_encoder = LabelEncoder().fit(sample.vic_age_group)
-sample.loc[:, 'vic_age_group'] = vic_age_encoder.transform(sample.vic_age_group).astype('int')
+sample.loc[:, 'vic_age_group'] = vic_age_encoder.transform(sample.vic_age_group)
 
 vic_race_encoder = LabelEncoder().fit(sample.vic_race)
-sample.loc[:, 'vic_race'] = vic_race_encoder.transform(sample.vic_race).astype('int')
+sample.loc[:, 'vic_race'] = vic_race_encoder.transform(sample.vic_race)
 
 vic_sex_encoder = LabelEncoder().fit(sample.vic_sex)
-sample.loc[:, 'vic_sex'] = vic_sex_encoder.transform(sample.vic_sex).astype('int')
+sample.loc[:, 'vic_sex'] = vic_sex_encoder.transform(sample.vic_sex)
 
 suspect_race_encoder = LabelEncoder().fit(sample.suspect_race)
-sample.loc[:, 'suspect_race'] = suspect_race_encoder.transform(sample.suspect_race).astype('int')
+sample.loc[:, 'suspect_race'] = suspect_race_encoder.transform(sample.suspect_race)
 
 suspect_sex_encoder = LabelEncoder().fit(sample.suspect_sex)
-sample.loc[:, 'suspect_sex'] = suspect_sex_encoder.transform(sample.suspect_sex).astype('int')
+sample.loc[:, 'suspect_sex'] = suspect_sex_encoder.transform(sample.suspect_sex)
 
 precinct_encoder = LabelEncoder().fit(sample.precinct)
-sample.loc[:, 'precinct'] = precinct_encoder.transform(sample.precinct).astype('float')
+sample.loc[:, 'precinct'] = precinct_encoder.transform(sample.precinct)
 
 borough_encoder = LabelEncoder().fit(sample.borough)
-sample.loc[:, 'borough'] = borough_encoder.transform(sample.borough).astype('int')
+sample.loc[:, 'borough'] = borough_encoder.transform(sample.borough)
 
 location_of_occurrence_encoder = LabelEncoder().fit(sample.location_of_occurrence)
 sample.loc[:, 'location_of_occurrence'] = location_of_occurrence_encoder.transform(
-    sample.location_of_occurrence).astype('int')
+    sample.location_of_occurrence)
 
 premises_encoder = LabelEncoder().fit(sample.premises)
-sample.loc[:, 'premises'] = premises_encoder.transform(sample.premises).astype('int')
+sample.loc[:, 'premises'] = premises_encoder.transform(sample.premises)
 
 offence_description_encoder = LabelEncoder().fit(sample.offence_description)
-sample.loc[:, 'offence_description'] = offence_description_encoder.transform(sample.offence_description).astype('int')
+sample.loc[:, 'offence_description'] = offence_description_encoder.transform(sample.offence_description)
 
 
 def sample_func(group):
@@ -168,10 +175,10 @@ def save_filtered_data(df, filename):
 
 
 def save_encoders():
-    encoders = {'time': time_normalizer, 'vic_age': vic_age_encoder, 'vic_race': vic_race_encoder,
+    encoders = {'time_of_call': time_normalizer, 'vic_age_group': vic_age_encoder, 'vic_race': vic_race_encoder,
                 'vic_sex': vic_sex_encoder,
                 'suspect_race': suspect_race_encoder, 'suspect_sex': suspect_sex_encoder, 'precinct': precinct_encoder,
-                'borough': borough_encoder, 'loc': location_of_occurrence_encoder, 'premises': premises_encoder,
+                'borough': borough_encoder, 'location_of_occurrence': location_of_occurrence_encoder, 'premises': premises_encoder,
                 'offence_description': offence_description_encoder}
 
     for name, encoder in encoders.items():
@@ -186,23 +193,18 @@ def save_train_test_split_data():
     X = X.astype('float')
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    print(X_train.shape)
-    # print(X_train)
-    print(type(X_train))
-    print(type(y_train))
+
     joblib.dump(X_train, 'data/X_train.pkl')
     joblib.dump(X_test, 'data/X_test.pkl')
     joblib.dump(y_train, 'data/y_train.pkl')
     joblib.dump(y_test, 'data/y_test.pkl')
 
 
-# # Save filtered data, with no encoding applied
-# save_filtered_data(data, 'selected_data')
-# # Save filtered data, with encoding applied
-# save_filtered_data(sample, 'encoded_selected_data')
-# # Save encoders
-# save_encoders()
-# # Save train_test data
+# Save filtered data, with no encoding applied
+save_filtered_data(data, 'selected_data')
+# Save filtered data, with encoding applied
+save_filtered_data(sample, 'encoded_selected_data')
+# Save encoders
+save_encoders()
+# Save train_test data
 save_train_test_split_data()
-
-
